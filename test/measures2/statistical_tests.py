@@ -1,0 +1,66 @@
+'''
+Created on Jun 13, 2017
+
+@author: meike.zehlike
+'''
+from scipy.stats import stats
+from scipy.stats.stats import ttest_ind
+import statsmodels.api as sm
+
+
+def t_test_ind(dataset, target_col, protected_col, equal_var=0):
+    """
+    corresponds to difference of means test
+
+    performs the independent two-sample t-Test, or Welch's test if equality of the variances is not
+    given
+
+    @param dataset:
+    @param target_col:      name of the column that contains the classifier results
+    @param protected_col:   name of the column that contains the protection status
+    @param equal_var:       if True, perform a standard independent 2 sample test that
+                            assumes equal population variances and sample size. If False (default), perform Welch’s t-test,
+                            which does not assume equal population variance
+
+    @return: calculated t-statistic and two-tailed p-value
+
+    """
+    protected_targets = dataset.get_all_targets_of_group(target_col, protected_col, 1)
+    nonprotected_targets = dataset.get_all_targets_of_group(target_col, protected_col, 0)
+    return ttest_ind(protected_targets, nonprotected_targets, equal_var)
+
+
+def fisher_exact_two_groups(dataset, target_col, protected_col):
+    """
+    Performs a Fisher exact test on a 2x2 contingency table as in scipy.stats.fisher_exact_two_groups()
+
+    @param dataset:
+    @param target_col:      name of the column that contains the classifier results
+    @param protected_col:   name of the column that contains the protection status
+
+    @return: odds ratio and related p-value
+    """
+    positive_protected = dataset.count_classification_and_category(target_col, protected_col, group=1, accepted=1)
+    negative_protected = dataset.count_classification_and_category(target_col, protected_col, group=1, accepted=0)
+    positive_nonprotected = dataset.count_classification_and_category(target_col, protected_col, group=0, accepted=1)
+    negative_nonprotected = dataset.count_classification_and_category(target_col, protected_col, group=0, accepted=0)
+
+    contingency_table = [[positive_protected, negative_protected], [positive_nonprotected, negative_nonprotected]]
+
+    return stats.fisher_exact(contingency_table)
+
+
+def regression_slope_test(dataset, target_col, protected_col):
+    """
+    TODO
+    :return:
+    """
+    y = dataset.get_all_targets_of_group(target_col, protected_col, 1)
+    X = dataset.get_all_targets_of_group(target_col, protected_col, 0)
+
+    est = sm.OLS(y, X)
+    results = est.fit()
+    print(results.summary())
+    #print(results.bse) #std err
+    #print(results.params) #coef
+    return results.tvalues
