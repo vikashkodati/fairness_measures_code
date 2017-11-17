@@ -62,7 +62,11 @@ def run_demo(filename):
     print('\n=========== odds ratio ============')
     print(fisher_exact_two_groups(dataset, 'target_loan_approved', 'protected_sex'))
 
+    print('\n=========== regression slope test ============')
+    print(regression_slope_test(dataset, 'target_score', dataset.protected_cols))
 
+    print('\n=========== two proportion z-test ============')
+    print(two_proportion_z_test(dataset, 'target_loan_approved', 'protected_sex'))
 
 
 
